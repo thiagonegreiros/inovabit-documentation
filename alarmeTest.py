@@ -2,6 +2,7 @@ from mpython import *
 import ntptime
 from machine import Timer
 import music
+#teste teste
 
 #Modulo de UI
 ui = UI(oled)
