@@ -23,7 +23,7 @@ try:
         oled.show()
         
     #Conectando ao wifi
-    my_wifi.connectWiFi("9609_Fibra", "Pedrovi56")
+    my_wifi.connectWiFi("Nome da rede", "Senha")
     for c in range(20, 60, 2):
         ui.ProgressBar(14, 32, 100, 16, c)
         oled.show()
