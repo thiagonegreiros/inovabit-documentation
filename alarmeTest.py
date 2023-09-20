@@ -3,6 +3,8 @@ import ntptime
 from machine import Timer
 import music
 
+WifiLogin = ['Nome da rede', 'Senha']
+
 #Modulo de UI
 ui = UI(oled)
 
@@ -11,7 +13,7 @@ centerX = 63
 centerY = 31
 
 #Tela inicial
-opc = ["inicio", "Opcoes", "RGB", "Lanterna", "Piano", "CardPlay"]
+opc = ["inicio", "WiFi", "RGB", "Lanterna", "Piano", "CardPlay"]
 tela = opc[0]
 i = 0
 
@@ -25,7 +27,7 @@ try:
         oled.show()
         
     #Conectando ao wifi
-    my_wifi.connectWiFi("Nome da rede", "Senha")
+    my_wifi.connectWiFi(WifiLogin[0], WifiLogin[1])
     for c in range(20, 60, 2):
         ui.ProgressBar(14, 32, 100, 16, c)
         oled.show()
@@ -39,7 +41,7 @@ except OSError :
     oled.fill(0)
     oled.DispChar("Erro de inicializacao", 0, 20)
     oled.show() 
-else: 
+finally: 
     
     #Funcao para setar data e horario
     def getTime(_):
@@ -50,7 +52,6 @@ else:
         oled.show()
     
     def menu(i):
-        print(i)
         oled.fill(0)
         oled.DispChar(opc[i], 0, 0, 2)
         try:
@@ -68,7 +69,6 @@ else:
                 tela = opc[i]
                 break
             elif button_b.value() == 0:
-                print(len(opc))
                 i = i+1 if i+1 <= (len(opc)-1) else 0
                 return menu(i)
         
@@ -213,5 +213,38 @@ else:
                 #Inicialmente foi pensado uma forma de ler o que foi falado e checar a palavra porem o microfone apensa le frequencia
                 oled.DispChar(str(sound.read()), 0, 32)
                 oled.show()
+        
+        elif tela == "WiFi":
+            tim.deinit()
+            oled.fill(0)
             
+            if my_wifi.sta.isconnected():
+                oled.DispChar("{}".format(my_wifi.sta.ifconfig()[0]), 0, 0)
+                oled.DispChar("{}".format(my_wifi.sta.ifconfig()[1]), 0, 16)
+                oled.DispChar("{}".format(my_wifi.sta.ifconfig()[2]), 0, 32)
+                oled.DispChar("{}".format(my_wifi.sta.ifconfig()[3]), 0, 48)
+            else:
+                oled.DispChar("Wifi nao conectado", 0, 0)
+            oled.show()
+            
+            while True:
+                if button_b.value() == 0:
+                    tela = "Opcoes"
+                    break
+                
+                if button_a.value() == 0:
+                    oled.fill(0)
+                    oled.DispChar("Conectando ao wifi...", 0, 0)
+                    oled.show()
+                    try:
+                        my_wifi.connectWiFi(WifiLogin[0], WifiLogin[1])
+                    except OSError :
+                        oled.fill(0)
+                        oled.DispChar("Erro ao conectar wifi", 0, 20)
+                        oled.show() 
+                        time.sleep(5)
+                    finally:
+                        pass
+                    tela = "WiFi"
+                    break
     
