@@ -2,7 +2,6 @@ from mpython import *
 import ntptime
 from machine import Timer
 import music
-#teste teste
 
 #Modulo de UI
 ui = UI(oled)
@@ -12,7 +11,9 @@ centerX = 63
 centerY = 31
 
 #Tela inicial
-tela = "inicio"
+opc = ["inicio", "Opcoes", "RGB", "Lanterna", "Piano", "CardPlay"]
+tela = opc[0]
+i = 0
 
 #conexao WiFi
 my_wifi = wifi()
@@ -48,6 +49,32 @@ else:
         oled.DispChar("{:02d}:{:02d}".format(t[3], t[4]), 50, 16)
         oled.show()
     
+    def menu(i):
+        print(i)
+        oled.fill(0)
+        oled.DispChar(opc[i], 0, 0, 2)
+        try:
+            oled.DispChar(opc[i+1], 0, 16)
+        except:
+            pass
+        try:
+            oled.DispChar(opc[i+2], 0, 32)
+        except:
+            pass
+        oled.show()
+        
+        while True:
+            if button_a.value() == 0:
+                tela = opc[i]
+                break
+            elif button_b.value() == 0:
+                print(len(opc))
+                i = i+1 if i+1 <= (len(opc)-1) else 0
+                return menu(i)
+        
+        return tela
+    
+    
     #Inicializando modulo Timer - Machine
     tim = Timer(1)
     
@@ -59,29 +86,15 @@ else:
             tim.init(period=1000, mode=Timer.PERIODIC, callback=getTime)
             while True:
                 
-                #Usa o acelerometro para mudar entre as telas (Essa parte sera alterada futuramente)
-                x = accelerometer.get_x()
-                y = accelerometer.get_y()
-                
-                offSetX=int(numberMap(y,1,-1,-64,64))   
-                offSetY=int(numberMap(x,1,-1,32,-32))
-                
-                moveX = centerX+offSetX
-                moveY = centerY+offSetY
-                move = ""
-                
-                if moveX >= 80:
-                    tela = "RGB"
+                if button_b.value() == 0:
+                    tela = "Opcoes"
                     break
-                if moveX <= 20:
-                    tela = "Lanterna"
-                    break
-                if moveY >= 60:
-                    tela = "Piano"
-                    break
-                if moveY <= 20:
-                    tela = "CardPlay"
-                    break
+        
+        elif tela == "Opcoes":
+            tim.deinit()
+            
+            tela = menu(0)
+            print(tela)
         
         elif tela == "RGB":
             
@@ -93,7 +106,7 @@ else:
             while True:
                 #Voltar para tela inicial
                 if button_b.value() == 0:
-                    tela = "inicio"
+                    tela = "Opcoes"
                     rgb[0] = (0, 0, 0)
                     rgb[1] = (0, 0, 0)
                     rgb[2] = (0, 0, 0)
@@ -147,7 +160,7 @@ else:
             while True:
                 #Voltar para tela inicial
                 if button_b.value() == 0:
-                    tela = "inicio"
+                    tela = "Opcoes"
                     rgb[0] = (0, 0, 0)
                     rgb[1] = (0, 0, 0)
                     rgb[2] = (0, 0, 0)
@@ -166,7 +179,7 @@ else:
             while True:
                 #Voltar para tela inicial
                 if button_b.value() == 0:
-                    tela = "inicio"
+                    tela = "Opcoes"
                     break
                 
                 #Se touchPad"_x" for tocado
@@ -194,7 +207,7 @@ else:
             while True:
                 #Voltar para tela inicial
                 if button_b.value() == 0:
-                    tela = "inicio"
+                    tela = "Opcoes"
                     break
                 
                 #Inicialmente foi pensado uma forma de ler o que foi falado e checar a palavra porem o microfone apensa le frequencia
