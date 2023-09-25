@@ -2,15 +2,13 @@ from mpython import *
 import ntptime
 from machine import Timer
 import music
+import _thread
 
+#Informacoes de wifi
 WifiLogin = ['Nome da rede', 'Senha']
 
 #Modulo de UI
 ui = UI(oled)
-
-#Dimensoes centrais da tela 128x64
-centerX = 63
-centerY = 31
 
 #Tela inicial
 opc = ["inicio", "WiFi", "RGB", "Lanterna", "Piano", "CardPlay"]
@@ -39,9 +37,17 @@ try:
         oled.show()
 except OSError :
     oled.fill(0)
+    #Mensagem de erro
     oled.DispChar("Erro de inicializacao", 0, 20)
     oled.show() 
 finally: 
+    
+    #Funcao thread(Futuramente fazer uma funcao para checar se usuario estiver IDLE)
+    def thFunction(param1, id):
+        while True:
+            seg = time.localtime()[5]
+            time.sleep(1)
+            print(seg)
     
     #Funcao para setar data e horario
     def getTime(_):
@@ -51,6 +57,7 @@ finally:
         oled.DispChar("{:02d}:{:02d}".format(t[3], t[4]), 50, 16)
         oled.show()
     
+    #Funcao de menu
     def menu(i):
         oled.fill(0)
         oled.DispChar(opc[i], 0, 0, 2)
@@ -78,10 +85,12 @@ finally:
     #Inicializando modulo Timer - Machine
     tim = Timer(1)
     
+    #Inicializacao de thread
+    _thread.start_new_thread(thFunction, (1, 0))
+    
     while True:
         
         if tela == "inicio":
-            
             #Inicializando horario, reseta a cada segundo periodicamente usando a funcao getTime()
             tim.init(period=1000, mode=Timer.PERIODIC, callback=getTime)
             while True:
@@ -92,9 +101,7 @@ finally:
         
         elif tela == "Opcoes":
             tim.deinit()
-            
             tela = menu(0)
-            print(tela)
         
         elif tela == "RGB":
             
@@ -218,6 +225,7 @@ finally:
             tim.deinit()
             oled.fill(0)
             
+            #Checar se estiver conecatado ao wifi
             if my_wifi.sta.isconnected():
                 oled.DispChar("{}".format(my_wifi.sta.ifconfig()[0]), 0, 0)
                 oled.DispChar("{}".format(my_wifi.sta.ifconfig()[1]), 0, 16)
@@ -232,7 +240,8 @@ finally:
                     tela = "Opcoes"
                     break
                 
-                if button_a.value() == 0:
+                #Se nao estiver conectado tenta conectar novemente
+                if button_a.value() == 0 and not my_wifi.sta.isconnected():
                     oled.fill(0)
                     oled.DispChar("Conectando ao wifi...", 0, 0)
                     oled.show()
@@ -242,9 +251,9 @@ finally:
                         oled.fill(0)
                         oled.DispChar("Erro ao conectar wifi", 0, 20)
                         oled.show() 
-                        time.sleep(5)
+                        time.sleep(3)
                     finally:
-                        pass
-                    tela = "WiFi"
-                    break
+                        tela = "WiFi"
+                        break
+                    
     
