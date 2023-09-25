@@ -52,7 +52,7 @@ finally:
     #Funcao para setar data e horario
     def getTime(_):
         oled.fill(0)
-        
+        t = time.localtime()
         oled.DispChar("{}/{}/{}".format(t[2], t[1], t[0]), 34, 0)
         oled.DispChar("{:02d}:{:02d}".format(t[3], t[4]), 50, 16)
         oled.show()
@@ -89,7 +89,7 @@ finally:
     _thread.start_new_thread(thFunction, (1, 0))
     
     while True:
-        t = time.localtime()
+        
         if tela == "inicio":
             #Inicializando horario, reseta a cada segundo periodicamente usando a funcao getTime()
             tim.init(period=1000, mode=Timer.PERIODIC, callback=getTime)
