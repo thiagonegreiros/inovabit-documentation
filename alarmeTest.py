@@ -3,6 +3,7 @@ import ntptime
 from machine import Timer
 import music
 import _thread
+import socket
 
 #Informacoes de wifi
 WifiLogin = ['Nome da rede', 'Senha']
@@ -11,7 +12,7 @@ WifiLogin = ['Nome da rede', 'Senha']
 ui = UI(oled)
 
 #Tela inicial
-opc = ["inicio", "WiFi", "RGB", "Lanterna", "Piano", "CardPlay"]
+opc = ["inicio", "WiFi", "RGB", "Lanterna", "Piano", "CardPlay", "Servidor"]
 tela = opc[0]
 i = 0
 
@@ -255,5 +256,112 @@ finally:
                     finally:
                         tela = "WiFi"
                         break
+        
+        elif tela == "Servidor":
+            tim.deinit()
+            oled.fill(0)
+            
+            continuarLoop = True
+            
+            if not my_wifi.sta.isconnected():
+                oled.DispChar("Wifi nao conectado", 0, 0)
+                oled.show()
+                
+                while True:
+                    if button_b.value() == 0:
+                        tela = "Opcoes"
+                        break
                     
+                    if button_a.value() == 0 and not my_wifi.sta.isconnected():
+                        oled.fill(0)
+                        oled.DispChar("Conectando ao wifi...", 0, 0)
+                        oled.show()
+                        try:
+                            my_wifi.connectWiFi(WifiLogin[0], WifiLogin[1])
+                        except OSError :
+                            oled.fill(0)
+                            oled.DispChar("Erro ao conectar wifi", 0, 20)
+                            oled.show() 
+                            time.sleep(3)
+                        finally:
+                            tela = "WiFi"
+                            break
+                    if my_wifi.sta.isconnected():
+                        break
+                    
+                    
+            else:
+                try:
+                    port = 5001
+                    listenSocket = None
+                    
+                    ip = my_wifi.sta.ifconfig()[0]
+                    
+                    listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    listenSocket.bind((ip, port))
+                    listenSocket.listen(3)
+                    
+                    oled.DispChar("Esperando conexao..", 0, 0)
+                    oled.DispChar("IP:%s"%ip, 0, 16)
+                    oled.DispChar("Port:%s"%port, 0, 32)
+                    oled.show()
+                
+                    while True:
+                        conn, addr = listenSocket.accept()
+                        oled.fill(0)
+                        oled.DispChar("Conectado", 0, 16)
+                        oled.show()
+                        if continuarLoop == False:
+                            break
+                        
+                        while True:
+                            
+                            data = conn.recv(1024)
+                            if(len(data) == 0):
+                                conn.close()
+                                break
+                            data_utf = data.decode()
+                            if(data_utf == "ligar led verde"):
+                                rgb[0] = (0, 50, 0)
+                                rgb[1] = (0, 50, 0)
+                                rgb[2] = (0, 50, 0)
+                                rgb.write()
+                            if(data_utf == "ligar led vermelho"):
+                                rgb[0] = (50, 0, 0)
+                                rgb[1] = (50, 0, 0)
+                                rgb[2] = (50, 0, 0)
+                                rgb.write()
+                            if(data_utf == "ligar led azul"):
+                                rgb[0] = (0, 0, 50)
+                                rgb[1] = (0, 0, 50)
+                                rgb[2] = (0, 0, 50)
+                                rgb.write()
+                            if(data_utf == "desligar led"):
+                                rgb[0] = (0, 0, 0)
+                                rgb[1] = (0, 0, 0)
+                                rgb[2] = (0, 0, 0)
+                                rgb.write()
+                            if(data_utf == "desconectar"):
+                                if(listenSocket):
+                                    listenSocket.close()
+                                tela = "Opcoes"
+                                rgb[0] = (0, 0, 0)
+                                rgb[1] = (0, 0, 0)
+                                rgb[2] = (0, 0, 0)
+                                rgb.write()
+                                continuarLoop = False
+                                break
+                            
+                            oled.DispChar(data_utf, 0, 48)
+                            oled.show()
+                            oled.fill_rect(0, 48, 128, 16, 0)
+                            conn.send(data)
+                
+                except:
+                    if(listenSocket):
+                        listenSocket.close()
+                    oled.fill(0)
+                    oled.DispChar("Conexao cortada", 0, 0)
+                    oled.show()
     
